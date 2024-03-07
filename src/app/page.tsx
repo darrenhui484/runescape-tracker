@@ -1,113 +1,290 @@
+"use client";
+
+import { useSearchParams } from "next/navigation";
+import { ReactNode, useReducer, useState } from "react";
+import { z } from "zod";
+import "./page.css";
 import Image from "next/image";
 
+const SkillNameSchema = z.union([
+  z.literal("Melee"),
+  z.literal("Ranged"),
+  z.literal("Magic"),
+  z.literal("Defence"),
+  z.literal("Thieving"),
+  z.literal("Gathering"),
+  z.literal("Crafting"),
+  z.literal("Cooking"),
+]);
+
+const SkillSchema = z.object({
+  name: SkillNameSchema,
+  level: z.number().min(1).max(99),
+  xp: z.number().min(0).max(2),
+});
+
+const ResourceNameSchema = z.union([
+  z.literal("Fish"),
+  z.literal("Meat"),
+  z.literal("Herb"),
+  z.literal("Vegetable"),
+  z.literal("Egg"),
+  z.literal("Flour"),
+  z.literal("Fruit"),
+  z.literal("Wood"),
+  z.literal("Stone"),
+  z.literal("Leather"),
+  z.literal("Thread"),
+  z.literal("Metal"),
+]);
+
+const ResourceSchema = z.object({
+  name: ResourceNameSchema,
+  amount: z.number().min(0),
+});
+
+const CharacterSheetSchema = z.object({
+  name: z.string(),
+  wounds: z.number().min(0).max(3),
+  deaths: z.number().min(0),
+  sideQuestsCompleted: z.number().min(0),
+  gold: z.number().min(0),
+  resources: z.array(ResourceSchema),
+  skills: z.array(SkillSchema),
+  inventory: z.array(z.string()),
+});
+
+type Resource = z.infer<typeof ResourceSchema>;
+type CharacterSheet = z.infer<typeof CharacterSheetSchema>;
+
+type ActionType = "test" | "resolveDelta" | "incrementWound" | "decrementWound";
+type Action = { type: ActionType };
+
 export default function Home() {
+  const searchParams = useSearchParams();
+  const params = searchParams.get("test");
+  console.log(params, searchParams);
+
+  const emptyCharacterSheet: CharacterSheet = {
+    name: "",
+    wounds: 0,
+    deaths: 0,
+    sideQuestsCompleted: 0,
+    gold: 0,
+    resources: [
+      { name: "Egg", amount: 2 },
+      { name: "Metal", amount: 2 },
+      { name: "Egg", amount: 2 },
+      { name: "Metal", amount: 2 },
+      { name: "Egg", amount: 2 },
+      { name: "Metal", amount: 2 },
+    ],
+    skills: [
+      {
+        name: "Melee",
+        xp: 0,
+        level: 1,
+      },
+      {
+        name: "Ranged",
+        xp: 0,
+        level: 1,
+      },
+      {
+        name: "Magic",
+        xp: 0,
+        level: 1,
+      },
+      {
+        name: "Defence",
+        xp: 0,
+        level: 1,
+      },
+      {
+        name: "Thieving",
+        xp: 0,
+        level: 1,
+      },
+      {
+        name: "Gathering",
+        xp: 0,
+        level: 1,
+      },
+      {
+        name: "Crafting",
+        xp: 0,
+        level: 1,
+      },
+      {
+        name: "Cooking",
+        xp: 0,
+        level: 1,
+      },
+    ],
+    inventory: ["one handed sword", "recipe book"],
+  };
+
+  const [state, dispatch] = useReducer(reducer, emptyCharacterSheet);
+  const [modalContent, setModalContent] = useState<ReactNode>(null);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+
+  //load previous config
+
+  function onWoundClick() {
+    console.log("testes");
+    const render = (
+      <SimpleCounterEditor
+        title="Wounds"
+        currentCount={state.wounds}
+        onIncrement={() => dispatch({ type: "incrementWound" })}
+        onDecrement={() => dispatch({ type: "decrementWound" })}
+      />
+    );
+    setModalContent(render);
+    setIsModalOpen(true);
+  }
+
+  console.log(isModalOpen);
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
+    <main>
+      <div className="flex-col">
+        <div>
+          <div onClick={onWoundClick} className="text-heading">
+            Wounds: {state.wounds}
+          </div>
+          <div className="text-heading">Deaths: {state.deaths}</div>
+          <div className="text-heading">
+            Side Quests Completed: {state.sideQuestsCompleted}
+          </div>
+          <div>
             <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
+              height={40}
+              width={40}
+              src={"/resource/rs-gold.png"}
+              alt="Gold"
             />
-          </a>
+            {state.gold}
+          </div>
+        </div>
+
+        <div className="text-heading">Skills</div>
+        <div className="skill-grid">
+          {state.skills.map((skill) => {
+            return (
+              <>
+                <div>{skill.name}</div>
+                <div>{skill.level}</div>
+                <div>XP: {skill.xp}</div>
+              </>
+            );
+          })}
+        </div>
+        <div className="text-heading">Resources</div>
+        <div className="wrapped-row">
+          {state.resources.map((resource) => {
+            const imageSource = `/resource/rs-${resource.name.toLowerCase()}.png`;
+            return (
+              <div>
+                <Image
+                  width={40}
+                  height={40}
+                  src={imageSource}
+                  alt={resource.name}
+                />
+                {resource.amount}
+              </div>
+            );
+          })}
+        </div>
+        <div className="text-heading">Inventory</div>
+        <div className="border">
+          {state.inventory.map((item) => {
+            return <div>{item}</div>;
+          })}
         </div>
       </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-full sm:before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full sm:after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50 text-balance`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
+      <Modal
+        isOpen={isModalOpen}
+        content={modalContent}
+        onClose={() => {
+          setModalContent(null);
+          setIsModalOpen(false);
+          dispatch({ type: "resolveDelta" });
+        }}
+      />
     </main>
   );
+}
+
+type CounterProps = {
+  onIncrement: () => void;
+  onDecrement: () => void;
+};
+function Counter({ onIncrement, onDecrement }: CounterProps) {
+  return (
+    <div>
+      <button className="decrement-counter-button" onClick={onDecrement}>
+        -
+      </button>
+      <button className="increment-counter-button" onClick={onIncrement}>
+        +
+      </button>
+    </div>
+  );
+}
+
+type SimpleCounterEditor = {
+  title: string;
+  currentCount: number;
+  onIncrement: () => void;
+  onDecrement: () => void;
+};
+function SimpleCounterEditor({
+  title,
+  currentCount,
+  onIncrement,
+  onDecrement,
+}: SimpleCounterEditor) {
+  return (
+    <div>
+      <div>
+        {title}: {currentCount}
+      </div>
+      <Counter onIncrement={onIncrement} onDecrement={onDecrement} />
+    </div>
+  );
+}
+
+type ModalProps = { isOpen: boolean; content: ReactNode; onClose: () => void };
+function Modal({ isOpen, content, onClose }: ModalProps) {
+  const displayCss = isOpen ? { display: "block" } : { display: "none" };
+  return (
+    <div style={displayCss}>
+      {content}
+      <button onClick={onClose}>Done</button>
+    </div>
+  );
+}
+
+function reducer(state: CharacterSheet, action: Action): CharacterSheet {
+  switch (action.type) {
+    case "test":
+      return { ...state, wounds: state.wounds + 1 };
+    case "incrementWound":
+      return { ...state, wounds: state.wounds + 1 };
+    case "decrementWound":
+      if (state.wounds <= 0) {
+        return { ...state };
+      }
+      return { ...state, wounds: state.wounds - 1 };
+    case "resolveDelta":
+      return {
+        ...state,
+        wounds: state.wounds % 3,
+        deaths: state.deaths + Math.floor(state.wounds / 3),
+      };
+    default:
+      throw new Error(`Unknown type: ${action.type}`);
+  }
 }

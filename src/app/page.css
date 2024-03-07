@@ -1,0 +1,35 @@
+.skill-grid {
+  display: inline-grid;
+  border: 2px white solid;
+  grid-template-columns: 3fr 1fr 1fr;
+  padding: 0px 8px;
+}
+
+.text-heading {
+  margin: 8px 0px;
+  font-size: 1.5rem;
+}
+
+.wrapped-row {
+  display:flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.border {
+  display: inline-grid;
+  border: 2px white solid;
+  padding: 0px 8px;
+}
+
+.decrement-counter-button {
+  padding: 15px 30px;
+  background-color: #CE4C3A;
+  font-size: 3rem;
+}
+
+.increment-counter-button {
+  padding: 15px 30px;
+  background-color: #98CE3A;
+  font-size: 3rem;
+}
