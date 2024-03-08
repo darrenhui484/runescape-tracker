@@ -220,6 +220,7 @@ export default function PlayerCharacterSheet({}: PlayerCharacterSheetProps) {
         </div>
         <div>
           <Image
+            unoptimized
             onClick={simpleCounterOnClickFactory("Gold", "resolveGold")}
             height={40}
             width={40}
@@ -252,6 +253,7 @@ export default function PlayerCharacterSheet({}: PlayerCharacterSheetProps) {
               return (
                 <div key={resource.name}>
                   <Image
+                    unoptimized
                     width={40}
                     height={40}
                     src={imageSource}

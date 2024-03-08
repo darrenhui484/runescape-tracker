@@ -63,7 +63,7 @@ function ImageCounterEditor({
   return (
     <div className={styles.box}>
       <div className={styles.row}>
-        <Image height={80} width={80} src={src} alt={alt} />
+        <Image unoptimized height={80} width={80} src={src} alt={alt} />
         <div>{count}</div>
         <div className={styles.column}>
           <AddButton onClick={onAdd} />
