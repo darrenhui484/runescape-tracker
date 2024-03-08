@@ -1,0 +1,19 @@
+.textSize{
+  font-size: 1.5rem;
+}
+
+.doneButton{
+  width: 100%;
+}
+
+.container{
+  display: flex;
+  gap: 12px;
+  flex-direction: column;
+}
+
+.center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}

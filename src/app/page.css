@@ -6,7 +6,7 @@
 }
 
 .text-heading {
-  margin: 8px 0px;
+  /* margin: 8px 0px; */
   font-size: 1.5rem;
 }
 
@@ -14,6 +14,7 @@
   display:flex;
   flex-wrap: wrap;
   gap: 8px;
+  ;
 }
 
 .border {
@@ -22,14 +23,14 @@
   padding: 0px 8px;
 }
 
-.decrement-counter-button {
-  padding: 15px 30px;
-  background-color: #CE4C3A;
-  font-size: 3rem;
+.row{
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  align-items: center;
 }
 
-.increment-counter-button {
-  padding: 15px 30px;
-  background-color: #98CE3A;
-  font-size: 3rem;
+.container {
+  display: inline-flex;
+  flex-direction: column;
 }

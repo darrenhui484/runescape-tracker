@@ -1,0 +1,21 @@
+.grid{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px
+}
+
+.column{
+  display: flex;
+  flex-direction: column;
+}
+
+.row{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px
+}
+
+.box{
+  border: 1px solid white;
+}

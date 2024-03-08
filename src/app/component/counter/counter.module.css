@@ -1,0 +1,16 @@
+.decrementCounterButton {
+  padding: 15px 30px;
+  background-color: #CE4C3A;
+  font-size: 3rem;
+}
+
+.incrementCounterButton {
+  padding: 15px 30px;
+  background-color: #98CE3A;
+  font-size: 3rem;
+}
+
+.container{
+  display:flex;
+  gap: 12px
+}

@@ -1,69 +1,34 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { ReactNode, useReducer, useState } from "react";
+import { ReactNode, useReducer } from "react";
 import { z } from "zod";
 import "./page.css";
 import Image from "next/image";
+import {
+  Action,
+  CharacterSheet,
+  ResourcesCount,
+  ResourcesCountSchema,
+  SkillsCount,
+  SkillsCountSchema,
+  UserInteractionActionType,
+} from "./types";
+import { Modal, modalReducer } from "./component/modal/Modal";
 
-const SkillNameSchema = z.union([
-  z.literal("Melee"),
-  z.literal("Ranged"),
-  z.literal("Magic"),
-  z.literal("Defence"),
-  z.literal("Thieving"),
-  z.literal("Gathering"),
-  z.literal("Crafting"),
-  z.literal("Cooking"),
-]);
+import { SimpleCounterEditor } from "./component/simpleCounterEditor/SimpleCounterEditor";
+import { SimpleTextInputEditor } from "./component/simpleTextInputEditor/SimpleTextInputEditor";
+import { SimpleDropdownEditor } from "./component/simpleDropdownEditor/SimpleDropdownEditor";
+import { AddButton } from "./component/addButton/AddButton";
+import { RemoveButton } from "./component/removeButton/RemoveButton";
+import { ImageCounterListEditor } from "./component/imageCounterListEditor/ImageCounterListEditor";
 
-const SkillSchema = z.object({
-  name: SkillNameSchema,
-  level: z.number().min(1).max(99),
-  xp: z.number().min(0).max(2),
-});
-
-const ResourceNameSchema = z.union([
-  z.literal("Fish"),
-  z.literal("Meat"),
-  z.literal("Herb"),
-  z.literal("Vegetable"),
-  z.literal("Egg"),
-  z.literal("Flour"),
-  z.literal("Fruit"),
-  z.literal("Wood"),
-  z.literal("Stone"),
-  z.literal("Leather"),
-  z.literal("Thread"),
-  z.literal("Metal"),
-]);
-
-const ResourceSchema = z.object({
-  name: ResourceNameSchema,
-  amount: z.number().min(0),
-});
-
-const CharacterSheetSchema = z.object({
-  name: z.string(),
-  wounds: z.number().min(0).max(3),
-  deaths: z.number().min(0),
-  sideQuestsCompleted: z.number().min(0),
-  gold: z.number().min(0),
-  resources: z.array(ResourceSchema),
-  skills: z.array(SkillSchema),
-  inventory: z.array(z.string()),
-});
-
-type Resource = z.infer<typeof ResourceSchema>;
-type CharacterSheet = z.infer<typeof CharacterSheetSchema>;
-
-type ActionType = "test" | "resolveDelta" | "incrementWound" | "decrementWound";
-type Action = { type: ActionType };
+const localStorageSaveKey = "rs-tracker";
 
 export default function Home() {
   const searchParams = useSearchParams();
-  const params = searchParams.get("test");
-  console.log(params, searchParams);
+  // const params = searchParams.get("test");
+  // console.log(params, searchParams);
 
   const emptyCharacterSheet: CharacterSheet = {
     name: "",
@@ -71,14 +36,7 @@ export default function Home() {
     deaths: 0,
     sideQuestsCompleted: 0,
     gold: 0,
-    resources: [
-      { name: "Egg", amount: 2 },
-      { name: "Metal", amount: 2 },
-      { name: "Egg", amount: 2 },
-      { name: "Metal", amount: 2 },
-      { name: "Egg", amount: 2 },
-      { name: "Metal", amount: 2 },
-    ],
+    resources: [],
     skills: [
       {
         name: "Melee",
@@ -121,170 +79,377 @@ export default function Home() {
         level: 1,
       },
     ],
-    inventory: ["one handed sword", "recipe book"],
+    inventory: ["recipe book"],
   };
+  const existingCharacterSheet = localStorage.getItem(localStorageSaveKey);
+  const [characterSheetState, characterSheetDispatch] = useReducer(
+    characterSheetReducer,
+    existingCharacterSheet == null
+      ? emptyCharacterSheet
+      : JSON.parse(existingCharacterSheet)
+  );
+  const [modalState, modalDispatch] = useReducer(modalReducer, {
+    isOpen: false,
+    content: null,
+  });
 
-  const [state, dispatch] = useReducer(reducer, emptyCharacterSheet);
-  const [modalContent, setModalContent] = useState<ReactNode>(null);
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  //TODO load previous config, save current config
 
-  //load previous config
-
-  function onWoundClick() {
-    console.log("testes");
-    const render = (
-      <SimpleCounterEditor
-        title="Wounds"
-        currentCount={state.wounds}
-        onIncrement={() => dispatch({ type: "incrementWound" })}
-        onDecrement={() => dispatch({ type: "decrementWound" })}
-      />
-    );
-    setModalContent(render);
-    setIsModalOpen(true);
+  function simpleCounterOnClickFactory(
+    title: string,
+    actionType: UserInteractionActionType
+  ) {
+    return () => {
+      const modalContent = (
+        <SimpleCounterEditor
+          title={title}
+          onSubmit={(delta) => {
+            characterSheetDispatch({ type: actionType, payload: delta });
+            modalDispatch({ type: "close" });
+          }}
+        />
+      );
+      modalDispatch({ type: "open", payload: modalContent });
+    };
   }
 
-  console.log(isModalOpen);
+  function onAddItem() {
+    const modalContent = (
+      <SimpleTextInputEditor
+        title="Add Item"
+        onSubmit={(newItem) => {
+          characterSheetDispatch({
+            type: "addItemToInventory",
+            payload: newItem,
+          });
+          modalDispatch({ type: "close" });
+        }}
+      />
+    );
+    modalDispatch({ type: "open", payload: modalContent });
+  }
+
+  function onRemoveItem() {
+    const modalContent = (
+      <SimpleDropdownEditor
+        title={"Remove Item"}
+        items={characterSheetState.inventory}
+        onSubmit={(itemToRemove) => {
+          characterSheetDispatch({
+            type: "removeItemFromInventory",
+            payload: itemToRemove,
+          });
+          modalDispatch({ type: "close" });
+        }}
+      />
+    );
+    modalDispatch({ type: "open", payload: modalContent });
+  }
+
+  function onEditResources() {
+    const modalContent = (
+      <ImageCounterListEditor
+        initialState={{
+          Fish: 0,
+          Meat: 0,
+          Herb: 0,
+          Vegetable: 0,
+          Egg: 0,
+          Flour: 0,
+          Fruit: 0,
+          Wood: 0,
+          Stone: 0,
+          Leather: 0,
+          Thread: 0,
+          Metal: 0,
+        }}
+        onSubmit={(resourcesCount) => {
+          characterSheetDispatch({
+            type: "resolveResources",
+            payload: resourcesCount,
+          });
+          modalDispatch({ type: "close" });
+        }}
+      />
+    );
+    modalDispatch({ type: "open", payload: modalContent });
+  }
+
+  function onEditSkills() {
+    const modalContent = (
+      <ImageCounterListEditor
+        initialState={{
+          Melee: 0,
+          Ranged: 0,
+          Magic: 0,
+          Defence: 0,
+          Thieving: 0,
+          Gathering: 0,
+          Crafting: 0,
+          Cooking: 0,
+        }}
+        onSubmit={(resourcesCount) => {
+          characterSheetDispatch({
+            type: "resolveSkills",
+            payload: resourcesCount,
+          });
+          modalDispatch({ type: "close" });
+        }}
+      />
+    );
+    modalDispatch({ type: "open", payload: modalContent });
+  }
 
   return (
     <main>
-      <div className="flex-col">
+      <div className="container">
         <div>
-          <div onClick={onWoundClick} className="text-heading">
-            Wounds: {state.wounds}
+          <div
+            onClick={simpleCounterOnClickFactory("Wounds", "resolveWound")}
+            className="text-heading"
+          >
+            Wounds: {characterSheetState.wounds}
           </div>
-          <div className="text-heading">Deaths: {state.deaths}</div>
-          <div className="text-heading">
-            Side Quests Completed: {state.sideQuestsCompleted}
+          <div
+            onClick={simpleCounterOnClickFactory("Deaths", "resolveDeath")}
+            className="text-heading"
+          >
+            Deaths: {characterSheetState.deaths}
+          </div>
+          <div
+            onClick={simpleCounterOnClickFactory(
+              "Side Quests Completed",
+              "resolveSideQuestsCompleted"
+            )}
+            className="text-heading"
+          >
+            Side Quests Completed: {characterSheetState.sideQuestsCompleted}
           </div>
           <div>
             <Image
+              onClick={simpleCounterOnClickFactory("Gold", "resolveGold")}
               height={40}
               width={40}
-              src={"/resource/rs-gold.png"}
+              src={"/resource/Gold.png"}
               alt="Gold"
             />
-            {state.gold}
+            {characterSheetState.gold}
           </div>
         </div>
 
-        <div className="text-heading">Skills</div>
-        <div className="skill-grid">
-          {state.skills.map((skill) => {
-            return (
-              <>
-                <div>{skill.name}</div>
-                <div>{skill.level}</div>
-                <div>XP: {skill.xp}</div>
-              </>
-            );
-          })}
+        <div onClick={onEditSkills}>
+          <div className="text-heading">Skills</div>
+          <div className="skill-grid">
+            {characterSheetState.skills.map((skill) => {
+              return (
+                <>
+                  <div key={skill.name}>{skill.name}</div>
+                  <div key={`${skill.name}-level`}>{skill.level}</div>
+                  <div key={`${skill.name}-xp`}>XP: {skill.xp}</div>
+                </>
+              );
+            })}
+          </div>
         </div>
-        <div className="text-heading">Resources</div>
-        <div className="wrapped-row">
-          {state.resources.map((resource) => {
-            const imageSource = `/resource/rs-${resource.name.toLowerCase()}.png`;
-            return (
-              <div>
-                <Image
-                  width={40}
-                  height={40}
-                  src={imageSource}
-                  alt={resource.name}
-                />
-                {resource.amount}
-              </div>
-            );
-          })}
+
+        <div onClick={onEditResources}>
+          <div className="text-heading">Resources</div>
+          <div className="wrapped-row">
+            {characterSheetState.resources.map((resource) => {
+              const imageSource = `/resource/${resource.name}.png`;
+              return (
+                <div key={resource.name}>
+                  <Image
+                    width={40}
+                    height={40}
+                    src={imageSource}
+                    alt={resource.name}
+                  />
+                  {resource.amount}
+                </div>
+              );
+            })}
+          </div>
         </div>
-        <div className="text-heading">Inventory</div>
+
+        <div className="row">
+          <div className="text-heading">Inventory</div>
+          <RemoveButton onClick={() => onRemoveItem()} />
+          <AddButton onClick={() => onAddItem()} />
+        </div>
         <div className="border">
-          {state.inventory.map((item) => {
-            return <div>{item}</div>;
+          {characterSheetState.inventory.map((item) => {
+            return <div key={item}>{item}</div>;
           })}
         </div>
       </div>
-      <Modal
-        isOpen={isModalOpen}
-        content={modalContent}
-        onClose={() => {
-          setModalContent(null);
-          setIsModalOpen(false);
-          dispatch({ type: "resolveDelta" });
-        }}
-      />
+      <Modal isOpen={modalState.isOpen} content={modalState.content} />
     </main>
   );
 }
 
-type CounterProps = {
-  onIncrement: () => void;
-  onDecrement: () => void;
-};
-function Counter({ onIncrement, onDecrement }: CounterProps) {
-  return (
-    <div>
-      <button className="decrement-counter-button" onClick={onDecrement}>
-        -
-      </button>
-      <button className="increment-counter-button" onClick={onIncrement}>
-        +
-      </button>
-    </div>
-  );
-}
-
-type SimpleCounterEditor = {
-  title: string;
-  currentCount: number;
-  onIncrement: () => void;
-  onDecrement: () => void;
-};
-function SimpleCounterEditor({
-  title,
-  currentCount,
-  onIncrement,
-  onDecrement,
-}: SimpleCounterEditor) {
-  return (
-    <div>
-      <div>
-        {title}: {currentCount}
-      </div>
-      <Counter onIncrement={onIncrement} onDecrement={onDecrement} />
-    </div>
-  );
-}
-
-type ModalProps = { isOpen: boolean; content: ReactNode; onClose: () => void };
-function Modal({ isOpen, content, onClose }: ModalProps) {
-  const displayCss = isOpen ? { display: "block" } : { display: "none" };
-  return (
-    <div style={displayCss}>
-      {content}
-      <button onClick={onClose}>Done</button>
-    </div>
-  );
-}
-
-function reducer(state: CharacterSheet, action: Action): CharacterSheet {
+function characterSheetReducer(
+  state: CharacterSheet,
+  action: Action<
+    UserInteractionActionType,
+    number | string | ResourcesCount | SkillsCount
+  >
+): CharacterSheet {
+  let newState: CharacterSheet;
   switch (action.type) {
-    case "test":
-      return { ...state, wounds: state.wounds + 1 };
-    case "incrementWound":
-      return { ...state, wounds: state.wounds + 1 };
-    case "decrementWound":
-      if (state.wounds <= 0) {
-        return { ...state };
-      }
-      return { ...state, wounds: state.wounds - 1 };
-    case "resolveDelta":
-      return {
-        ...state,
-        wounds: state.wounds % 3,
-        deaths: state.deaths + Math.floor(state.wounds / 3),
-      };
+    case "resolveWound":
+      newState = handleResolveWound(state, z.number().parse(action.payload));
+      break;
+    case "resolveDeath":
+      newState = handleResolveDeath(state, z.number().parse(action.payload));
+      break;
+    case "resolveSideQuestsCompleted":
+      newState = handleResolveSideQuestsCompleted(
+        state,
+        z.number().parse(action.payload)
+      );
+      break;
+    case "resolveGold":
+      newState = handleResolveGold(state, z.number().parse(action.payload));
+      break;
+    case "addItemToInventory":
+      newState = handleAddItemToInventory(
+        state,
+        z.string().parse(action.payload)
+      );
+      break;
+    case "removeItemFromInventory":
+      newState = removeItemFromInventory(
+        state,
+        z.string().parse(action.payload)
+      );
+      break;
+    case "resolveResources":
+      newState = handleResolveResources(
+        state,
+        ResourcesCountSchema.parse(action.payload)
+      );
+      break;
+    case "resolveSkills":
+      newState = handleResolveSkills(
+        state,
+        SkillsCountSchema.parse(action.payload)
+      );
+      break;
     default:
       throw new Error(`Unknown type: ${action.type}`);
   }
+  localStorage.setItem(localStorageSaveKey, JSON.stringify(newState));
+  return newState;
+}
+
+function handleResolveSkills(state: CharacterSheet, skillsCount: SkillsCount) {
+  const newState = structuredClone(state);
+
+  const skillKeys = Object.keys(skillsCount) as Array<keyof SkillsCount>;
+  skillKeys.forEach((skillKey) => {
+    const skillState = newState.skills.find((skill) => skill.name === skillKey);
+    if (skillState == null) {
+      throw new Error("unable to find skill state");
+    }
+    const xpDelta = skillsCount[skillKey];
+    const totalXp = Math.max(skillState.level * 3 + skillState.xp + xpDelta, 3);
+    skillState.xp = totalXp % 3;
+    skillState.level = Math.floor(totalXp / 3);
+  });
+  return newState;
+}
+
+function handleResolveResources(
+  state: CharacterSheet,
+  resourcesCount: ResourcesCount
+) {
+  const resourceKeys = Object.keys(resourcesCount) as Array<
+    keyof ResourcesCount
+  >;
+  const newState = structuredClone(state);
+  resourceKeys.forEach((resourceKey) => {
+    const delta = resourcesCount[resourceKey];
+    const resourceState = newState.resources.find(
+      (resource) => resource.name === resourceKey
+    );
+    if (delta === 0) {
+      return;
+    } else if (delta < 0) {
+      if (resourceState == null) {
+        return;
+      }
+      const newAmount = resourceState.amount + delta;
+
+      if (newAmount <= 0) {
+        newState.resources = newState.resources.filter(
+          (resource) => resource.name !== resourceKey
+        );
+        return;
+      }
+      resourceState.amount = newAmount;
+    } else {
+      // delta > 0
+      if (resourceState == null) {
+        newState.resources.push({
+          name: resourceKey,
+          amount: delta,
+        });
+        return;
+      }
+      resourceState.amount = resourceState.amount + delta;
+    }
+  });
+  return newState;
+}
+
+function handleAddItemToInventory(state: CharacterSheet, payload: string) {
+  state.inventory.push(payload);
+  return { ...state, inventory: state.inventory };
+}
+
+function removeItemFromInventory(state: CharacterSheet, payload: string) {
+  const indexToRemove = state.inventory.indexOf(payload);
+  if (indexToRemove == -1) {
+    return { ...state };
+  }
+  state.inventory.splice(indexToRemove, 1);
+  return { ...state, inventory: state.inventory };
+}
+
+function handleResolveGold(state: CharacterSheet, payload: number) {
+  const delta = payload;
+  return { ...state, gold: Math.max(state.gold + delta, 0) };
+}
+
+function handleResolveDeath(state: CharacterSheet, payload: number) {
+  const delta = payload;
+  return { ...state, deaths: Math.max(state.deaths + delta, 0) };
+}
+
+function handleResolveSideQuestsCompleted(
+  state: CharacterSheet,
+  payload: number
+) {
+  const delta = payload;
+  return { ...state, sideQuestsCompleted: Math.max(state.deaths + delta, 0) };
+}
+
+function handleResolveWound(state: CharacterSheet, payload: number) {
+  const delta = payload;
+  if (delta === 0) {
+    return { ...state };
+  }
+  const totalWounds = state.wounds + state.deaths * 3 + delta;
+  if (delta > 0) {
+    return {
+      ...state,
+      wounds: totalWounds % 3,
+      deaths: Math.floor(totalWounds / 3),
+    };
+  }
+  return {
+    ...state,
+    wounds: Math.max(state.wounds + delta, 0),
+  };
 }
