@@ -26,7 +26,7 @@ import { ImageCounterListEditor } from "./component/imageCounterListEditor/Image
 const localStorageSaveKey = "rs-tracker";
 
 export default function Home() {
-  const searchParams = useSearchParams();
+  // const searchParams = useSearchParams();
   // const params = searchParams.get("test");
   // console.log(params, searchParams);
 
