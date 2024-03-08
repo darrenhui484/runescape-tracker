@@ -1,0 +1,37 @@
+.skillGrid {
+  display: inline-grid;
+  border: 2px white solid;
+  grid-template-columns: 3fr 1fr 1fr;
+  padding: 0px 8px;
+}
+
+.textHeading {
+  /* margin: 8px 0px; */
+  font-size: 1.5rem;
+}
+
+.wrappedRow {
+  display:flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  ;
+}
+
+.border {
+  display: inline-grid;
+  border: 2px white solid;
+  padding: 0px 8px;
+}
+
+.row{
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  align-items: center;
+}
+
+.container {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 12px;
+}
