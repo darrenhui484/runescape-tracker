@@ -428,7 +428,7 @@ function handleResolveSideQuestsCompleted(
   payload: number
 ) {
   const delta = payload;
-  return { ...state, sideQuestsCompleted: Math.max(state.deaths + delta, 0) };
+  return { ...state, sideQuestsCompleted: Math.max(state.sideQuestsCompleted + delta, 0) };
 }
 
 function handleResolveWound(state: CharacterSheet, payload: number) {
