@@ -4,7 +4,7 @@ import styles from "./modal.module.css"
 
 type ModalProps = { isOpen: boolean; content: ReactNode };
 export function Modal({ isOpen, content }: ModalProps) {
-  const displayCss = isOpen ? { display: "flex" } : { display: "none" };
+  const displayCss = isOpen ? { display: "grid" } : { display: "none" };
   return <div className={styles.modal} style={displayCss}>{content}</div>;
 }
 
