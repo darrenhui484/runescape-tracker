@@ -11,6 +11,9 @@ const SkillNameSchema = z.union([
   z.literal("Cooking"),
 ]);
 
+export type SkillName = z.infer<typeof SkillNameSchema>;
+
+
 const SkillSchema = z.object({
   name: SkillNameSchema,
   level: z.number().min(1).max(99),
@@ -32,31 +35,36 @@ const ResourceNameSchema = z.union([
   z.literal("Metal"),
 ]);
 
+const CounterSchema = z.object({
+  imageSrc: z.string(),
+  count: z.number(),
+});
+
 export const ResourcesCountSchema = z.object({
-  Fish: z.number(),
-  Meat: z.number(),
-  Herb: z.number(),
-  Vegetable: z.number(),
-  Egg: z.number(),
-  Flour: z.number(),
-  Fruit: z.number(),
-  Wood: z.number(),
-  Stone: z.number(),
-  Leather: z.number(),
-  Thread: z.number(),
-  Metal: z.number(),
+  Fish: CounterSchema,
+  Meat: CounterSchema,
+  Herb: CounterSchema,
+  Vegetable: CounterSchema,
+  Egg: CounterSchema,
+  Flour: CounterSchema,
+  Fruit: CounterSchema,
+  Wood: CounterSchema,
+  Stone: CounterSchema,
+  Leather: CounterSchema,
+  Thread: CounterSchema,
+  Metal: CounterSchema,
 });
 export type ResourcesCount = z.infer<typeof ResourcesCountSchema>;
 
 export const SkillsCountSchema = z.object({
-  Melee: z.number(),
-  Ranged: z.number(),
-  Magic: z.number(),
-  Defence: z.number(),
-  Thieving: z.number(),
-  Gathering: z.number(),
-  Crafting: z.number(),
-  Cooking: z.number(),
+  Melee: CounterSchema,
+  Ranged: CounterSchema,
+  Magic: CounterSchema,
+  Defence: CounterSchema,
+  Thieving: CounterSchema,
+  Gathering: CounterSchema,
+  Crafting: CounterSchema,
+  Cooking: CounterSchema,
 });
 export type SkillsCount = z.infer<typeof SkillsCountSchema>;
 

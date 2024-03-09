@@ -1,12 +1,11 @@
 .skillGrid {
   display: inline-grid;
   border: 2px white solid;
-  grid-template-columns: 3fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   padding: 0px 8px;
 }
 
 .textHeading {
-  /* margin: 8px 0px; */
   font-size: 1.5rem;
 }
 

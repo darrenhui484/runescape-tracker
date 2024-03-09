@@ -5,36 +5,42 @@ import Image from "next/image";
 import styles from "./imageCounterListEditor.module.css";
 import { useState } from "react";
 
-type ImageCounterListEditorProps<T extends { [key: string]: number }> = {
+type ImageCounterListEditorProps<
+  T extends { [key: string]: { imageSrc: string; count: number } },
+> = {
   initialState: T;
   onSubmit: (counter: T) => void;
 };
-export function ImageCounterListEditor<T extends { [key: string]: number }>({
-  initialState,
-  onSubmit,
-}: ImageCounterListEditorProps<T>) {
+export function ImageCounterListEditor<
+  T extends { [key: string]: { imageSrc: string; count: number } },
+>({ initialState, onSubmit }: ImageCounterListEditorProps<T>) {
   const [counter, setCounter] = useState<T>(initialState);
   return (
     <div>
       <div className={styles.grid}>
         {Object.keys(counter).map((counterKey) => {
-          const imageSource = `/resource/${counterKey}.png`;
           return (
             <ImageCounterEditor
               key={counterKey}
-              src={imageSource}
+              src={counter[counterKey].imageSrc}
               alt={counterKey}
-              count={counter[counterKey]}
+              count={counter[counterKey].count}
               onAdd={() => {
                 setCounter((prev) => ({
                   ...prev,
-                  [counterKey]: prev[counterKey] + 1,
+                  [counterKey]: {
+                    ...prev[counterKey],
+                    count: prev[counterKey].count + 1,
+                  },
                 }));
               }}
               onRemove={() => {
                 setCounter((prev) => ({
                   ...prev,
-                  [counterKey]: prev[counterKey] - 1,
+                  [counterKey]: {
+                    ...prev[counterKey],
+                    count: prev[counterKey].count - 1,
+                  },
                 }));
               }}
             />

@@ -8,6 +8,7 @@ import {
   SkillsCountSchema,
   UserInteractionActionType,
   CharacterSheet,
+  SkillName,
 } from "@/app/types";
 import { useReducer } from "react";
 import { AddButton } from "../addButton/AddButton";
@@ -22,6 +23,40 @@ import styles from "./playerCharacterSheet.module.css";
 import Image from "next/image";
 
 const localStorageSaveKey = "rs-tracker";
+
+const meleeImage = "https://runescape.wiki/images/Attack-icon.png?93d2b";
+const rangedImage = "https://runescape.wiki/images/Ranged-icon.png?310aa";
+const magicImage = "https://runescape.wiki/images/Magic-icon.png?60d6d";
+const defenceImage = "https://runescape.wiki/images/Defence-icon.png?8d986";
+const thievingImage = "https://runescape.wiki/images/Thieving-icon.png?1fcf2";
+const gatheringImage = "https://runescape.wiki/images/Backpack_icon.png?ff441";
+const craftingImage = "https://runescape.wiki/images/Crafting-icon.png?f224a";
+const cookingImage = "https://runescape.wiki/images/Cooking-icon.png?00812";
+
+const skills = ["Melee", "Ranged", "Magic", "Defence"];
+
+function getSkillImage(skill: SkillName) {
+  switch (skill) {
+    case "Melee":
+      return meleeImage;
+    case "Ranged":
+      return rangedImage;
+    case "Magic":
+      return magicImage;
+    case "Defence":
+      return defenceImage;
+    case "Thieving":
+      return thievingImage;
+    case "Gathering":
+      return gatheringImage;
+    case "Crafting":
+      return craftingImage;
+    case "Cooking":
+      return cookingImage;
+    default:
+      throw new Error(`Invalid skill: ${skill}`);
+  }
+}
 
 type PlayerCharacterSheetProps = {};
 export default function PlayerCharacterSheet({}: PlayerCharacterSheetProps) {
@@ -145,18 +180,54 @@ export default function PlayerCharacterSheet({}: PlayerCharacterSheetProps) {
     const modalContent = (
       <ImageCounterListEditor
         initialState={{
-          Fish: 0,
-          Meat: 0,
-          Herb: 0,
-          Vegetable: 0,
-          Egg: 0,
-          Flour: 0,
-          Fruit: 0,
-          Wood: 0,
-          Stone: 0,
-          Leather: 0,
-          Thread: 0,
-          Metal: 0,
+          Fish: {
+            count: 0,
+            imageSrc: "/resource/Fish.png",
+          },
+          Meat: {
+            count: 0,
+            imageSrc: "/resource/Meat.png",
+          },
+          Herb: {
+            count: 0,
+            imageSrc: "/resource/Herb.png",
+          },
+          Vegetable: {
+            count: 0,
+            imageSrc: "/resource/Vegetable.png",
+          },
+          Egg: {
+            count: 0,
+            imageSrc: "/resource/Egg.png",
+          },
+          Flour: {
+            count: 0,
+            imageSrc: "/resource/Flour.png",
+          },
+          Fruit: {
+            count: 0,
+            imageSrc: "/resource/Fruit.png",
+          },
+          Wood: {
+            count: 0,
+            imageSrc: "/resource/Wood.png",
+          },
+          Stone: {
+            count: 0,
+            imageSrc: "/resource/Stone.png",
+          },
+          Leather: {
+            count: 0,
+            imageSrc: "/resource/Leather.png",
+          },
+          Thread: {
+            count: 0,
+            imageSrc: "/resource/Thread.png",
+          },
+          Metal: {
+            count: 0,
+            imageSrc: "/resource/Metal.png",
+          },
         }}
         onSubmit={(resourcesCount) => {
           characterSheetDispatch({
@@ -174,14 +245,38 @@ export default function PlayerCharacterSheet({}: PlayerCharacterSheetProps) {
     const modalContent = (
       <ImageCounterListEditor
         initialState={{
-          Melee: 0,
-          Ranged: 0,
-          Magic: 0,
-          Defence: 0,
-          Thieving: 0,
-          Gathering: 0,
-          Crafting: 0,
-          Cooking: 0,
+          Melee: {
+            count: 0,
+            imageSrc: meleeImage,
+          },
+          Ranged: {
+            count: 0,
+            imageSrc: rangedImage,
+          },
+          Magic: {
+            count: 0,
+            imageSrc: magicImage,
+          },
+          Defence: {
+            count: 0,
+            imageSrc: defenceImage,
+          },
+          Thieving: {
+            count: 0,
+            imageSrc: thievingImage,
+          },
+          Gathering: {
+            count: 0,
+            imageSrc: gatheringImage,
+          },
+          Crafting: {
+            count: 0,
+            imageSrc: craftingImage,
+          },
+          Cooking: {
+            count: 0,
+            imageSrc: cookingImage,
+          },
         }}
         onSubmit={(resourcesCount) => {
           characterSheetDispatch({
@@ -236,7 +331,13 @@ export default function PlayerCharacterSheet({}: PlayerCharacterSheetProps) {
             {characterSheetState.skills.map((skill) => {
               return (
                 <>
-                  <div key={skill.name}>{skill.name}</div>
+                  <Image
+                    unoptimized
+                    src={getSkillImage(skill.name)}
+                    alt={skill.name}
+                    height={40}
+                    width={40}
+                  ></Image>
                   <div key={`${skill.name}-level`}>{skill.level}</div>
                   <div key={`${skill.name}-xp`}>XP: {skill.xp}</div>
                 </>
@@ -348,7 +449,7 @@ function handleResolveSkills(state: CharacterSheet, skillsCount: SkillsCount) {
     if (skillState == null) {
       throw new Error("unable to find skill state");
     }
-    const xpDelta = skillsCount[skillKey];
+    const xpDelta = skillsCount[skillKey].count;
     const totalXp = Math.max(skillState.level * 3 + skillState.xp + xpDelta, 3);
     skillState.xp = totalXp % 3;
     skillState.level = Math.floor(totalXp / 3);
@@ -365,7 +466,7 @@ function handleResolveResources(
   >;
   const newState = structuredClone(state);
   resourceKeys.forEach((resourceKey) => {
-    const delta = resourcesCount[resourceKey];
+    const delta = resourcesCount[resourceKey].count;
     const resourceState = newState.resources.find(
       (resource) => resource.name === resourceKey
     );
@@ -428,7 +529,10 @@ function handleResolveSideQuestsCompleted(
   payload: number
 ) {
   const delta = payload;
-  return { ...state, sideQuestsCompleted: Math.max(state.sideQuestsCompleted + delta, 0) };
+  return {
+    ...state,
+    sideQuestsCompleted: Math.max(state.sideQuestsCompleted + delta, 0),
+  };
 }
 
 function handleResolveWound(state: CharacterSheet, payload: number) {
