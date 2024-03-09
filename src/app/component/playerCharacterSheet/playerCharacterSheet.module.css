@@ -19,7 +19,7 @@
 .border {
   display: inline-grid;
   border: 2px white solid;
-  padding: 0px 8px;
+  padding: 8px 8px;
 }
 
 .row{

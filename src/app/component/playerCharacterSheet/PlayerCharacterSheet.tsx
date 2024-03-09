@@ -21,6 +21,7 @@ import { SimpleTextInputEditor } from "../simpleTextInputEditor/SimpleTextInputE
 import { z } from "zod";
 import styles from "./playerCharacterSheet.module.css";
 import Image from "next/image";
+import { Indicator } from "../indicator/Indicator";
 
 const localStorageSaveKey = "rs-tracker";
 
@@ -316,13 +317,33 @@ export default function PlayerCharacterSheet({}: PlayerCharacterSheetProps) {
           Deaths: {characterSheetState.deaths}
         </div>
         <div
+          className={styles.border}
           onClick={simpleCounterOnClickFactory(
             "Side Quests Completed",
             "resolveSideQuestsCompleted"
           )}
-          className={styles.textHeading}
         >
-          Side Quests Completed: {characterSheetState.sideQuestsCompleted}
+          <div className={styles.textHeading}>
+            Side Quests Completed: {characterSheetState.sideQuestsCompleted}
+          </div>
+          <div className={styles.row}>
+            <Indicator
+              isOn={characterSheetState.sideQuestsCompleted >= 3}
+              text="3"
+            />
+            <Indicator
+              isOn={characterSheetState.sideQuestsCompleted >= 5}
+              text="5"
+            />
+            <Indicator
+              isOn={characterSheetState.sideQuestsCompleted >= 8}
+              text="8"
+            />
+            <Indicator
+              isOn={characterSheetState.sideQuestsCompleted >= 12}
+              text="12"
+            />
+          </div>
         </div>
         <div>
           <Image
@@ -558,12 +579,13 @@ function handleResolveWound(state: CharacterSheet, payload: number) {
   if (delta === 0) {
     return { ...state };
   }
-  const totalWounds = state.wounds + state.deaths * 3 + delta;
+  let deathModifier = state.sideQuestsCompleted >= 5 ? 4 : 3
+  const totalWounds = state.wounds + (state.deaths * deathModifier) + delta;
   if (delta > 0) {
     return {
       ...state,
-      wounds: totalWounds % 3,
-      deaths: Math.floor(totalWounds / 3),
+      wounds: totalWounds % deathModifier,
+      deaths: Math.floor(totalWounds / deathModifier),
     };
   }
   return {
