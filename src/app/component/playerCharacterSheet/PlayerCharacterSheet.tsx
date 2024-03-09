@@ -62,16 +62,6 @@ function getSkillImage(skill: SkillName) {
   }
 }
 
-function getResourceImage(resource: string) {
-  if ("Lobster" === resource) {
-    return lobsterImage;
-  }
-  if ("Ration" === resource) {
-    return rationImage;
-  }
-  return `/resource/${resource}.png`;
-}
-
 type PlayerCharacterSheetProps = {};
 export default function PlayerCharacterSheet({}: PlayerCharacterSheetProps) {
   const emptyCharacterSheet: CharacterSheet = {
@@ -80,22 +70,7 @@ export default function PlayerCharacterSheet({}: PlayerCharacterSheetProps) {
     deaths: 0,
     sideQuestsCompleted: 0,
     gold: 0,
-    resources: [
-      { name: "Fish", amount: 0 },
-      { name: "Meat", amount: 0 },
-      { name: "Herb", amount: 0 },
-      { name: "Vegetable", amount: 0 },
-      { name: "Egg", amount: 0 },
-      { name: "Flour", amount: 0 },
-      { name: "Fruit", amount: 0 },
-      { name: "Wood", amount: 0 },
-      { name: "Stone", amount: 0 },
-      { name: "Leather", amount: 0 },
-      { name: "Thread", amount: 0 },
-      { name: "Metal", amount: 0 },
-      { name: "Ration", amount: 0 },
-      { name: "Lobster", amount: 0 },
-    ],
+    resources: [],
     skills: [
       {
         name: "Melee",
@@ -206,21 +181,66 @@ export default function PlayerCharacterSheet({}: PlayerCharacterSheetProps) {
   }
 
   function onEditResources() {
-    const initialState = characterSheetState.resources.reduce<ResourcesCount>(
-      (accumulator, resource) => {
-        const imageSrc = getResourceImage(resource.name);
-        return Object.assign(accumulator, {
-          [resource.name]: {
-            count: resource.amount,
-            imageSrc: imageSrc,
-          },
-        });
-      },
-      {} as ResourcesCount
-    );
     const modalContent = (
       <ImageCounterListEditor
-        initialState={initialState}
+        initialState={{
+          Fish: {
+            count: 0,
+            imageSrc: "/resource/Fish.png",
+          },
+          Meat: {
+            count: 0,
+            imageSrc: "/resource/Meat.png",
+          },
+          Herb: {
+            count: 0,
+            imageSrc: "/resource/Herb.png",
+          },
+          Vegetable: {
+            count: 0,
+            imageSrc: "/resource/Vegetable.png",
+          },
+          Egg: {
+            count: 0,
+            imageSrc: "/resource/Egg.png",
+          },
+          Flour: {
+            count: 0,
+            imageSrc: "/resource/Flour.png",
+          },
+          Fruit: {
+            count: 0,
+            imageSrc: "/resource/Fruit.png",
+          },
+          Wood: {
+            count: 0,
+            imageSrc: "/resource/Wood.png",
+          },
+          Stone: {
+            count: 0,
+            imageSrc: "/resource/Stone.png",
+          },
+          Leather: {
+            count: 0,
+            imageSrc: "/resource/Leather.png",
+          },
+          Thread: {
+            count: 0,
+            imageSrc: "/resource/Thread.png",
+          },
+          Metal: {
+            count: 0,
+            imageSrc: "/resource/Metal.png",
+          },
+          Lobster: {
+            count: 0,
+            imageSrc: "https://runescape.wiki/images/Lobster.png?48782",
+          },
+          Ration: {
+            count: 0,
+            imageSrc: "https://runescape.wiki/images/Pork_pie.png?467bc",
+          },
+        }}
         onSubmit={(resourcesCount) => {
           characterSheetDispatch({
             type: "resolveResources",
@@ -361,11 +381,14 @@ export default function PlayerCharacterSheet({}: PlayerCharacterSheetProps) {
         <div onClick={onEditResources}>
           <div className={styles.textHeading}>Resources</div>
           <div className={styles.wrappedRow}>
-            {characterSheetState.resources.flatMap((resource) => {
-              if(resource.amount <= 0){
-                return []
+            {characterSheetState.resources.map((resource) => {
+              let imageSource = `/resource/${resource.name}.png`;
+              if ("Lobster" === resource.name) {
+                imageSource = lobsterImage;
               }
-              let imageSource = getResourceImage(resource.name);
+              if ("Ration" === resource.name) {
+                imageSource = rationImage;
+              }
 
               return (
                 <div key={resource.name}>
@@ -482,14 +505,36 @@ function handleResolveResources(
   >;
   const newState = structuredClone(state);
   resourceKeys.forEach((resourceKey) => {
-    const newResourceCount = resourcesCount[resourceKey].count;
+    const delta = resourcesCount[resourceKey].count;
     const resourceState = newState.resources.find(
       (resource) => resource.name === resourceKey
     );
-    if (resourceState == null) {
-      throw new Error(`nonexistent resourceState: ${resourceKey}`);
+    if (delta === 0) {
+      return;
+    } else if (delta < 0) {
+      if (resourceState == null) {
+        return;
+      }
+      const newAmount = resourceState.amount + delta;
+
+      if (newAmount <= 0) {
+        newState.resources = newState.resources.filter(
+          (resource) => resource.name !== resourceKey
+        );
+        return;
+      }
+      resourceState.amount = newAmount;
+    } else {
+      // delta > 0
+      if (resourceState == null) {
+        newState.resources.push({
+          name: resourceKey,
+          amount: delta,
+        });
+        return;
+      }
+      resourceState.amount = resourceState.amount + delta;
     }
-    resourceState.amount = Math.max(newResourceCount, 0);
   });
   return newState;
 }
@@ -534,8 +579,8 @@ function handleResolveWound(state: CharacterSheet, payload: number) {
   if (delta === 0) {
     return { ...state };
   }
-  let deathModifier = state.sideQuestsCompleted >= 5 ? 4 : 3;
-  const totalWounds = state.wounds + state.deaths * deathModifier + delta;
+  let deathModifier = state.sideQuestsCompleted >= 5 ? 4 : 3
+  const totalWounds = state.wounds + (state.deaths * deathModifier) + delta;
   if (delta > 0) {
     return {
       ...state,
