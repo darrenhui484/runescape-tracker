@@ -33,6 +33,9 @@ const gatheringImage = "https://runescape.wiki/images/Backpack_icon.png?ff441";
 const craftingImage = "https://runescape.wiki/images/Crafting-icon.png?f224a";
 const cookingImage = "https://runescape.wiki/images/Cooking-icon.png?00812";
 
+const lobsterImage = "https://runescape.wiki/images/Lobster.png?48782";
+const rationImage = "https://runescape.wiki/images/Pork_pie.png?467bc";
+
 const skills = ["Melee", "Ranged", "Magic", "Defence"];
 
 function getSkillImage(skill: SkillName) {
@@ -228,6 +231,14 @@ export default function PlayerCharacterSheet({}: PlayerCharacterSheetProps) {
             count: 0,
             imageSrc: "/resource/Metal.png",
           },
+          Lobster: {
+            count: 0,
+            imageSrc: "https://runescape.wiki/images/Lobster.png?48782",
+          },
+          Ration: {
+            count: 0,
+            imageSrc: "https://runescape.wiki/images/Pork_pie.png?467bc",
+          },
         }}
         onSubmit={(resourcesCount) => {
           characterSheetDispatch({
@@ -350,7 +361,14 @@ export default function PlayerCharacterSheet({}: PlayerCharacterSheetProps) {
           <div className={styles.textHeading}>Resources</div>
           <div className={styles.wrappedRow}>
             {characterSheetState.resources.map((resource) => {
-              const imageSource = `/resource/${resource.name}.png`;
+              let imageSource = `/resource/${resource.name}.png`;
+              if ("Lobster" === resource.name) {
+                imageSource = lobsterImage;
+              }
+              if ("Ration" === resource.name) {
+                imageSource = rationImage;
+              }
+
               return (
                 <div key={resource.name}>
                   <Image

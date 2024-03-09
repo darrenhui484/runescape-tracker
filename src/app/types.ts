@@ -33,6 +33,8 @@ const ResourceNameSchema = z.union([
   z.literal("Leather"),
   z.literal("Thread"),
   z.literal("Metal"),
+  z.literal("Ration"),
+  z.literal("Lobster"),
 ]);
 
 const CounterSchema = z.object({
@@ -53,6 +55,8 @@ export const ResourcesCountSchema = z.object({
   Leather: CounterSchema,
   Thread: CounterSchema,
   Metal: CounterSchema,
+  Lobster: CounterSchema,
+  Ration: CounterSchema,
 });
 export type ResourcesCount = z.infer<typeof ResourcesCountSchema>;
 
